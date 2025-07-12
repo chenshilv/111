@@ -1,0 +1,1993 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生成绩查询系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 移动端自适应增强 */
+        @media (max-width: 900px) {
+            .admin-tools {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            table {
+                font-size: 0.92rem;
+                min-width: 700px;
+            }
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 2px;
+            }
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+                padding: 12px 4px;
+            }
+            .logo {
+                justify-content: center;
+            }
+            .student-query {
+                padding: 18px 6px;
+                max-width: 100%;
+                border-radius: 8px;
+            }
+            .result-page {
+                padding: 16px 4px;
+                max-width: 100%;
+                border-radius: 8px;
+            }
+            .admin-page {
+                padding: 18px 4px;
+                max-width: 100vw;
+                border-radius: 8px;
+            }
+            .student-info {
+                grid-template-columns: 1fr;
+            }
+            .scores-container {
+                padding: 12px 4px;
+            }
+            .score-row {
+                padding: 10px 6px;
+                font-size: 1rem;
+            }
+            .subject {
+                font-size: 1rem;
+            }
+            .score {
+                font-size: 1.2rem;
+            }
+            .admin-section {
+                padding: 10px 2px;
+            }
+            .admin-tool {
+                padding: 12px 4px;
+            }
+            .captcha-container {
+                flex-direction: column;
+                gap: 8px;
+                align-items: stretch;
+            }
+            .captcha-code {
+                min-width: 100px;
+                font-size: 1.1rem;
+                padding: 8px 0;
+            }
+            .btn {
+                font-size: 1rem;
+                padding: 12px;
+            }
+            table {
+                min-width: 600px;
+            }
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --blue-gradient: linear-gradient(135deg, #3498db, #2c3e50);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            background: var(--blue-gradient);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            pointer-events: none;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1;
+        }
+        
+        .logo i {
+            font-size: 2.8rem;
+            color: #fff;
+            animation: pulse 2s infinite;
+        }
+        
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .admin-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1;
+            backdrop-filter: blur(5px);
+        }
+        
+        .admin-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .student-query {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--secondary);
+            font-size: 1.8rem;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .form-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 1.05rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .captcha-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .captcha-code {
+            background: linear-gradient(45deg, #3498db, #2c3e50);
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+            padding: 10px 25px;
+            border-radius: 8px;
+            letter-spacing: 5px;
+            cursor: pointer;
+            user-select: none;
+            min-width: 140px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .captcha-input {
+            flex: 1;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn i {
+            margin-right: 10px;
+        }
+        
+        /* 结果页面样式 */
+        .result-page {
+            display: none;
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 0 18px 0;
+            box-shadow: 0 2px 16px rgba(52,152,219,0.08), 0 1.5px 6px rgba(44,62,80,0.06);
+            margin-bottom: 16px;
+            animation: fadeIn 0.6s ease;
+            max-width: 410px;
+            margin: 0 auto;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .result-header h2 {
+            font-size: 2.2rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .result-header p {
+            color: #777;
+            font-size: 1.1rem;
+        }
+        
+        .student-info {
+            background: #f7fafd;
+            padding: 18px 18px 10px 18px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 6px rgba(52,152,219,0.06);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 18px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            align-items: flex-start;
+        }
+        
+        .info-item i {
+            color: var(--primary);
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .info-text h3 {
+            font-size: 0.93rem;
+            color: #888;
+            margin-bottom: 1px;
+            font-weight: 500;
+        }
+        
+        .info-text div {
+            font-size: 1.08rem;
+            font-weight: 600;
+            color: #222;
+            letter-spacing: 0.5px;
+        }
+        
+        .scores-container {
+            background: #f7fafd;
+            border-radius: 10px;
+            padding: 10px 10px 2px 10px;
+            box-shadow: 0 1.5px 6px rgba(52,152,219,0.04);
+            margin-bottom: 16px;
+        }
+        
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0 7px 0;
+            border-bottom: 1px solid #e3eaf2;
+            transition: background 0.2s;
+            gap: 0;
+        }
+        
+        .score-row:last-child {
+            border-bottom: none;
+        }
+        
+        .score-row:hover {
+            background: #f0f6fb;
+        }
+        
+        .subject {
+            font-weight: 500;
+            color: #444;
+            font-size: 1.05rem;
+            margin-right: 0;
+        }
+        
+        .score {
+            font-size: 1.18rem;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        .summary-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .summary-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .total-score, .rank-container {
+            background: var(--blue-gradient);
+            color: white;
+            padding: 35px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .total-score h3, .rank-container h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .total-score .score, .rank-container .rank {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 20px 0;
+            display: block;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        
+        .back-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #777;
+            font-size: 0.95rem;
+            margin-top: 30px;
+        }
+        
+        /* 管理员页面 */
+        .admin-page {
+            display: none;
+            background: white;
+            border-radius: 18px;
+            padding: 32px 18px 32px 18px;
+            box-shadow: 0 8px 32px rgba(44,62,80,0.10);
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .admin-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 12px 18px;
+            margin-bottom: 18px;
+        }
+        
+        .admin-header h2 {
+            font-size: 2.1rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 0;
+        }
+        
+        .admin-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px 22px;
+            margin-bottom: 28px;
+        }
+        
+        .admin-tool {
+            background: #f7fafd;
+            border-radius: 13px;
+            padding: 18px 14px 18px 14px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.06);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1.5px solid #e3eaf2;
+            min-height: 180px;
+        }
+        
+        .admin-tool:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(52,152,219,0.10);
+            border-color: var(--primary);
+        }
+        
+        .admin-tool i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .admin-tool h3 {
+            font-size: 1.18rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        
+        .admin-section {
+            background: #f8f9fa;
+            border-radius: 13px;
+            padding: 22px 12px 18px 12px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.06);
+        }
+        
+        .admin-section h3 {
+            margin-bottom: 16px;
+            color: var(--secondary);
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #e3eaf2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.18rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.04);
+        }
+        
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e3eaf2;
+        }
+        
+        th {
+            background: #f1f8ff;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        tr:hover {
+            background: #f0f6fb;
+        }
+        
+        .action-btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 0.98rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .edit-btn {
+            background: var(--warning);
+            color: white;
+            margin-right: 4px;
+        }
+        
+        .edit-btn:hover {
+            background: #e67e22;
+            transform: translateY(-1.5px) scale(1.04);
+        }
+        
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+            transform: translateY(-1.5px) scale(1.04);
+        }
+        
+        /* 管理员登录模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalFade 0.4s ease;
+        }
+
+        /* 编辑学生信息弹窗自适应布局优化 */
+        #edit-modal .modal-content {
+            max-width: 600px;
+            padding: 32px 18px 24px 18px;
+        }
+
+        /* PC端可拖拽弹窗样式 */
+        @media (min-width: 601px) {
+            #edit-modal .modal-content.draggable {
+                cursor: move;
+                user-select: none;
+            }
+        }
+        #edit-modal .modal-header h2 {
+            font-size: 1.45rem;
+        }
+        #edit-modal .input-group {
+            margin-bottom: 14px;
+        }
+        #edit-modal .input-group label {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        #edit-modal input[type="text"],
+        #edit-modal input[type="number"] {
+            padding: 10px 12px;
+            font-size: 1.02rem;
+            border-radius: 8px;
+        }
+        #edit-modal .btn {
+            margin-top: 10px;
+            font-size: 1.08rem;
+            padding: 12px 0;
+        }
+        /* 两列布局（PC端） */
+        #edit-modal .modal-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 24px;
+        }
+        #edit-modal .modal-header,
+        #edit-modal .btn {
+            grid-column: 1 / span 2;
+        }
+        /* 移动端单列 */
+        @media (max-width: 600px) {
+            #edit-modal .modal-content {
+                grid-template-columns: 1fr;
+                gap: 10px 0;
+                padding: 18px 4px 12px 4px;
+            }
+            #edit-modal .btn,
+            #edit-modal .modal-header {
+                grid-column: 1 / span 1;
+            }
+        }
+        
+        @keyframes modalFade {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-header h2 {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #777;
+            transition: all 0.2s;
+        }
+        
+        .close-modal:hover {
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .admin-tools {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            .logo {
+                justify-content: center;
+            }
+            .student-query, .result-page, .admin-page {
+                padding: 10px 2px;
+            }
+            .admin-tools {
+                gap: 8px;
+            }
+            .admin-tool {
+                padding: 10px 4px 10px 4px;
+                min-height: 120px;
+            }
+            .admin-section {
+                padding: 8px 2px 8px 2px;
+            }
+            .admin-section h3 {
+                font-size: 1.05rem;
+            }
+            .student-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+// 编辑学生信息弹窗PC端可拖拽
+(function() {
+    const modal = document.getElementById('edit-modal');
+    if (!modal) return;
+    const modalContent = modal.querySelector('.modal-content');
+    const header = modal.querySelector('.modal-header');
+    let isDragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+    function isPC() { return window.innerWidth > 600; }
+    function onMouseDown(e) {
+        if (!isPC()) return;
+        isDragging = true;
+        modalContent.classList.add('draggable');
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = modalContent.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+        document.body.style.userSelect = 'none';
+    }
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        let left = origX + dx;
+        let top = origY + dy;
+        const maxLeft = window.innerWidth - modalContent.offsetWidth;
+        const maxTop = window.innerHeight - modalContent.offsetHeight;
+        left = Math.max(0, Math.min(left, maxLeft));
+        top = Math.max(0, Math.min(top, maxTop));
+        modalContent.style.position = 'fixed';
+        modalContent.style.left = left + 'px';
+        modalContent.style.top = top + 'px';
+        modalContent.style.margin = '0';
+    }
+    function onMouseUp() {
+        isDragging = false;
+        modalContent.classList.remove('draggable');
+        document.body.style.userSelect = '';
+    }
+    if (header && modalContent) {
+        header.style.cursor = 'move';
+        header.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+    const observer = new MutationObserver(() => {
+        if (modal.style.display === 'flex' && isPC()) {
+            modalContent.style.position = '';
+            modalContent.style.left = '';
+            modalContent.style.top = '';
+            modalContent.style.margin = '';
+        }
+    });
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+})();
+
+// 修复验证码无法显示和管理员无法登录问题
+document.addEventListener('DOMContentLoaded', function() {
+    // 验证码相关
+    function randomCaptcha(len = 4) {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < len; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+    let currentCaptcha = '';
+    function renderCaptcha() {
+        currentCaptcha = randomCaptcha();
+        const codeEl = document.getElementById('captcha-code');
+        if(codeEl) codeEl.textContent = currentCaptcha;
+    }
+    const codeEl = document.getElementById('captcha-code');
+    if(codeEl) codeEl.addEventListener('click', renderCaptcha);
+    renderCaptcha();
+
+    // 管理员登录逻辑
+    function getAdminPassword() {
+        return localStorage.getItem('adminPassword') || 'admin123';
+    }
+    function handleAdminLogin() {
+        const password = document.getElementById('admin-password').value;
+        if (password === getAdminPassword()) {
+            document.getElementById('admin-page').style.display = 'block';
+            document.getElementById('student-page').style.display = 'none';
+            document.getElementById('result-page').style.display = 'none';
+            document.getElementById('login-modal').style.display = 'none';
+            if(document.getElementById('admin-password')) document.getElementById('admin-password').value = '';
+            if(typeof loadStudentDataFromStorage === 'function') loadStudentDataFromStorage();
+        } else {
+            alert('管理员密码错误！');
+        }
+    }
+    const loginBtn = document.getElementById('login-btn');
+    if(loginBtn) loginBtn.addEventListener('click', handleAdminLogin);
+    const adminPwdInput = document.getElementById('admin-password');
+    if(adminPwdInput) adminPwdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAdminLogin();
+        }
+    });
+});
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <h1 id="exam-title">学生成绩查询系统</h1>
+            </div>
+            <button class="admin-btn" id="admin-toggle">
+                <i class="fas fa-user-cog"></i> 管理员系统
+            </button>
+        </header>
+        
+        <!-- 学生查询页面 -->
+        <div id="student-page">
+            <div class="student-query">
+                <h2 class="form-title">学生成绩查询</h2>
+                <div class="input-group">
+                    <label for="exam-number"><i class="fas fa-id-card"></i> 考试号</label>
+                    <input type="text" id="exam-number" placeholder="请输入考试号">
+                </div>
+
+                <div class="input-group">
+                    <label for="password"><i class="fas fa-lock"></i> 密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+
+                <div class="input-group captcha-container">
+                    <div class="captcha-code" id="captcha-code" title="点击更换验证码"></div>
+                    <input type="text" class="captcha-input" id="captcha-input" placeholder="请输入验证码">
+                </div>
+
+                <button class="btn" id="query-btn">
+                    <i class="fas fa-search"></i> 查询成绩
+                </button>
+            </div>
+        </div>
+        
+        <!-- 查询结果页面 -->
+        <div class="result-page" id="result-page">
+            <div class="result-header">
+                <h2>成绩查询结果</h2>
+                <p>以下是您的考试成绩详情</p>
+            </div>
+            
+            <div class="student-info">
+                <div class="info-item">
+                    <div class="info-text">
+                        <h3>姓名</h3>
+                        <div id="result-name">张明</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-text">
+                        <h3>考试号</h3>
+                        <div id="result-id">202306001</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-text">
+                        <h3>学校</h3>
+                        <div id="result-school">第一中学</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-text">
+                        <h3>地区</h3>
+                        <div id="result-area">北京市海淀区</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scores-container">
+                <h3 style="margin-bottom: 20px; color: var(--secondary); text-align: center;">科目成绩</h3>
+                <div class="score-row">
+                    <div class="subject">语文</div>
+                    <div class="score" id="result-chinese">135</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">数学</div>
+                    <div class="score" id="result-math">142</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">英语</div>
+                    <div class="score" id="result-english">138</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">物理</div>
+                    <div class="score" id="result-physics">92</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">化学</div>
+                    <div class="score" id="result-chemistry">88</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">生物</div>
+                    <div class="score" id="result-biology">86</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">历史</div>
+                    <div class="score" id="result-history">89</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">地理</div>
+                    <div class="score" id="result-geography">91</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">政治</div>
+                    <div class="score" id="result-politics">87</div>
+                </div>
+                <!-- 总分和排名 -->
+                <div class="score-row">
+                    <div class="subject">总分</div>
+                    <div class="score" id="result-total">888</div>
+                </div>
+                <div class="score-row">
+                    <div class="subject">总分排名</div>
+                    <div class="score" id="result-rank">第128名</div>
+                </div>
+            </div>
+            
+
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="back-btn" id="back-to-query">
+                    <i class="fas fa-arrow-left"></i> 返回查询
+                </button>
+            </div>
+        </div>
+        
+        <!-- 管理员页面 -->
+        <div class="admin-page" id="admin-page">
+        <div class="admin-header">
+                <h2><i class="fas fa-user-cog"></i> 管理员系统</h2>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <button class="admin-btn" id="edit-title-btn" style="background:#3498db;color:#fff;">
+                    <i class="fas fa-pen"></i> 修改考试标题
+                  </button>
+                  <button class="admin-btn" id="change-admin-password-btn" style="background:#f39c12;color:#fff;">
+                    <i class="fas fa-key"></i> 修改密码
+                  </button>
+                  <button class="admin-btn" id="logout-admin-btn" style="background:#888;color:#fff;">
+                    <i class="fas fa-sign-out-alt"></i> 退出登录
+                  </button>
+                  <button class="admin-btn" id="back-to-student">
+                      <i class="fas fa-user-graduate"></i> 返回学生端
+                  </button>
+                </div>
+        // 管理员退出登录功能
+        const logoutAdminBtn = document.getElementById('logout-admin-btn');
+        if (logoutAdminBtn) {
+            logoutAdminBtn.addEventListener('click', function() {
+                adminPage.style.display = 'none';
+                studentPage.style.display = 'block';
+                resultPage.style.display = 'none';
+                window.scrollTo(0,0);
+            });
+        }
+            <!-- 显式添加跳转按钮在主内容区顶部 -->
+            <div style="margin-bottom:18px;text-align:right;">
+                <button class="admin-btn" id="goto-student-query">
+                    <i class="fas fa-search"></i> 去考生查询页
+                </button>
+            </div>
+        <!-- 修改考试标题模态框 -->
+        <div class="modal" id="edit-title-modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-edit-title">&times;</span>
+                <div class="modal-header">
+                    <h2><i class="fas fa-pen"></i> 修改考试标题</h2>
+                </div>
+                <div class="input-group">
+                    <label for="new-exam-title"><i class="fas fa-heading"></i> 新标题</label>
+                    <input type="text" id="new-exam-title" placeholder="请输入新的考试标题">
+                </div>
+                <button class="btn" id="save-exam-title-btn">
+                    <i class="fas fa-save"></i> 保存标题
+                </button>
+            </div>
+        </div>
+            </div>
+            
+            <div class="admin-tools">
+                <div class="admin-tool">
+                    <i class="fas fa-file-excel"></i>
+                    <h3>导出成绩</h3>
+                    <p>将当前学生成绩导出为Excel文件</p>
+                    <button class="btn" id="export-data">
+                        <i class="fas fa-file-export"></i> 导出Excel
+                    </button>
+                </div>
+                <div class="admin-tool">
+                    <i class="fas fa-file-download"></i>
+                    <h3>下载模板</h3>
+                    <p>下载成绩录入模板文件</p>
+                    <button class="btn btn-download" id="download-template">
+                        <i class="fas fa-download"></i> 下载Excel模板
+                    </button>
+                </div>
+                <div class="admin-tool">
+                    <i class="fas fa-file-upload"></i>
+                    <h3>上传成绩</h3>
+                    <p>批量上传学生成绩数据</p>
+                    <input type="file" id="upload-file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="display:none;">
+                    <button class="btn" id="upload-data">
+                        <i class="fas fa-upload"></i> 上传成绩数据
+                    </button>
+                    <span id="upload-tip" style="display:block;font-size:0.95rem;color:#888;margin-top:8px;">支持CSV或Excel（第一行为表头，字段：考试号,姓名,学校,地区,总分）</span>
+                </div>
+                <div class="admin-tool">
+                    <i class="fas fa-paste"></i>
+                    <h3>粘贴成绩</h3>
+                    <p>直接粘贴Excel/表格数据，自动导入</p>
+                    <textarea id="paste-area" placeholder="粘贴内容：考试号,姓名,学校,地区,语文,数学,英语,物理,化学,生物,历史,地理,政治,总分\n..." style="width:100%;height:80px;margin-bottom:8px;resize:vertical;"></textarea>
+                    <button class="btn" id="paste-import"><i class="fas fa-paste"></i> 导入粘贴数据</button>
+                    <span style="display:block;font-size:0.95rem;color:#888;margin-top:8px;">支持含9科成绩的粘贴（字段顺序见占位）</span>
+                </div>
+                <div class="admin-tool">
+                    <i class="fas fa-trash-alt"></i>
+                    <h3>删除所有学生信息</h3>
+                    <p>清空所有学生数据，操作需输入管理员密码，谨慎使用！</p>
+                    <button class="btn" id="delete-all-students-btn" style="background:#e74c3c;">
+                        <i class="fas fa-trash"></i> 删除所有学生
+                    </button>
+                </div>
+                <div class="admin-tool">
+                    <i class="fas fa-undo"></i>
+                    <h3>恢复所有成绩</h3>
+                    <p>恢复初始演示数据，操作需输入管理员密码，谨慎使用！</p>
+                    <button class="btn" id="restore-demo-students-btn" style="background:#3498db;">
+                        <i class="fas fa-undo"></i> 恢复演示数据
+                    </button>
+                </div>
+        <!-- 删除/恢复所有学生信息模态框 -->
+        <div class="modal" id="admin-action-modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-admin-action">&times;</span>
+                <div class="modal-header">
+                    <h2 id="admin-action-title"><i class="fas fa-exclamation-triangle"></i> 管理员操作</h2>
+                </div>
+                <div class="input-group">
+                    <label for="admin-action-password"><i class="fas fa-key"></i> 管理员密码</label>
+                    <input type="password" id="admin-action-password" placeholder="请输入管理员密码">
+                </div>
+                <div id="admin-action-tip" style="color:#e67e22;font-size:1rem;margin-bottom:10px;"></div>
+                <button class="btn" id="admin-action-confirm-btn">
+                    <i class="fas fa-check"></i> 确认操作
+                </button>
+            </div>
+        </div>
+        // 删除/恢复所有学生信息功能
+        const deleteAllBtn = document.getElementById('delete-all-students-btn');
+        const restoreDemoBtn = document.getElementById('restore-demo-students-btn');
+        const adminActionModal = document.getElementById('admin-action-modal');
+        const closeAdminAction = document.getElementById('close-admin-action');
+        const adminActionTitle = document.getElementById('admin-action-title');
+        const adminActionTip = document.getElementById('admin-action-tip');
+        const adminActionPwd = document.getElementById('admin-action-password');
+        const adminActionConfirm = document.getElementById('admin-action-confirm-btn');
+        let adminActionType = '';
+        // 备份初始演示数据
+        const DEMO_STUDENTS = [
+            ["202306001","张明","第一中学","北京市海淀区","135","142","138","92","88","86","89","91","87","888"],
+            ["202306002","李华","第二中学","北京市朝阳区","128","135","130","85","82","80","78","90","88","865"],
+            ["202306003","王芳","第三中学","北京市西城区","145","150","148","95","90","88","92","94","89","902"],
+            ["202306004","刘伟","第四中学","北京市东城区","120","125","130","80","75","70","65","85","80","854"]
+        ];
+        if(deleteAllBtn && restoreDemoBtn && adminActionModal && closeAdminAction && adminActionTitle && adminActionTip && adminActionPwd && adminActionConfirm) {
+            deleteAllBtn.addEventListener('click', function() {
+                adminActionType = 'delete';
+                adminActionTitle.innerHTML = '<i class="fas fa-trash"></i> 删除所有学生信息';
+                adminActionTip.textContent = '此操作将清空所有学生数据，且不可恢复，请谨慎操作！';
+                adminActionPwd.value = '';
+                adminActionModal.style.display = 'flex';
+            });
+            restoreDemoBtn.addEventListener('click', function() {
+                adminActionType = 'restore';
+                adminActionTitle.innerHTML = '<i class="fas fa-undo"></i> 恢复所有成绩';
+                adminActionTip.textContent = '此操作将恢复初始演示数据，当前数据将被覆盖，请谨慎操作！';
+                adminActionPwd.value = '';
+                adminActionModal.style.display = 'flex';
+            });
+            closeAdminAction.addEventListener('click', function() {
+                adminActionModal.style.display = 'none';
+            });
+            function doAdminAction() {
+                const pwd = adminActionPwd.value;
+                if(pwd !== getAdminPassword()) {
+                    alert('管理员密码错误！');
+                    return;
+                }
+                if(adminActionType==='delete') {
+                    // 清空表格和localStorage
+                    document.getElementById('student-tbody').innerHTML = '';
+                    localStorage.removeItem('studentData');
+                    alert('所有学生信息已删除！');
+                } else if(adminActionType==='restore') {
+                    // 恢复演示数据
+                    document.getElementById('student-tbody').innerHTML = '';
+                    addStudentRows(DEMO_STUDENTS, true);
+                    alert('已恢复初始演示数据！');
+                }
+                adminActionModal.style.display = 'none';
+            }
+            adminActionConfirm.addEventListener('click', doAdminAction);
+            adminActionPwd.addEventListener('keydown', function(e) {
+                if(e.key==='Enter') {
+                    e.preventDefault();
+                    doAdminAction();
+                }
+            });
+        }
+            </div>
+            
+            <div class="admin-section">
+                <h3><i class="fas fa-edit"></i> 学生信息管理</h3>
+                <div class="input-group">
+                    <label for="search-student"><i class="fas fa-search"></i> 搜索学生</label>
+                    <input type="text" id="search-student" placeholder="输入学生姓名或考试号">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>考试号</th>
+                            <th>姓名</th>
+                            <th>学校</th>
+                            <th>地区</th>
+                            <th>语文</th>
+                            <th>数学</th>
+                            <th>英语</th>
+                            <th>物理</th>
+                            <th>化学</th>
+                            <th>生物</th>
+                            <th>历史</th>
+                            <th>地理</th>
+                            <th>政治</th>
+                            <th>总分</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-tbody">
+                        <tr>
+                            <td>202306001</td>
+                            <td>张明</td>
+                            <td>第一中学</td>
+                            <td>北京市海淀区</td>
+                            <td>135</td>
+                            <td>142</td>
+                            <td>138</td>
+                            <td>92</td>
+                            <td>88</td>
+                            <td>86</td>
+                            <td>89</td>
+                            <td>91</td>
+                            <td>87</td>
+                            <td>888</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
+                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>202306002</td>
+                            <td>李华</td>
+                            <td>第二中学</td>
+                            <td>北京市朝阳区</td>
+                            <td>128</td>
+                            <td>135</td>
+                            <td>130</td>
+                            <td>85</td>
+                            <td>82</td>
+                            <td>80</td>
+                            <td>78</td>
+                            <td>90</td>
+                            <td>88</td>
+                            <td>865</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
+                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>202306003</td>
+                            <td>王芳</td>
+                            <td>第三中学</td>
+                            <td>北京市西城区</td>
+                            <td>145</td>
+                            <td>150</td>
+                            <td>148</td>
+                            <td>95</td>
+                            <td>90</td>
+                            <td>88</td>
+                            <td>92</td>
+                            <td>94</td>
+                            <td>89</td>
+                            <td>902</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
+                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>202306004</td>
+                            <td>刘伟</td>
+                            <td>第四中学</td>
+                            <td>北京市东城区</td>
+                            <td>120</td>
+                            <td>125</td>
+                            <td>130</td>
+                            <td>80</td>
+                            <td>75</td>
+                            <td>70</td>
+                            <td>65</td>
+                            <td>85</td>
+                            <td>80</td>
+                            <td>854</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
+                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- 编辑/删除弹窗 -->
+                <div id="edit-modal" class="modal">
+                  <div class="modal-content edit-modal-3row">
+                    <span class="close-modal" onclick="closeEditModal()">&times;</span>
+                    <div class="modal-header"><h2><i class="fas fa-edit"></i> 编辑学生信息</h2></div>
+                    <!-- 第一排：基本信息 -->
+                    <div class="edit-row">
+                      <div class="input-group"><label>考试号</label><input type="text" id="edit-id"></div>
+                      <div class="input-group"><label>姓名</label><input type="text" id="edit-name"></div>
+                      <div class="input-group"><label>学校</label><input type="text" id="edit-school"></div>
+                      <div class="input-group"><label>地区</label><input type="text" id="edit-area"></div>
+                    </div>
+                    <!-- 第二排：各科成绩 -->
+                    <div class="edit-row">
+                      <div class="input-group"><label>语文</label><input type="number" id="edit-chinese"></div>
+                      <div class="input-group"><label>数学</label><input type="number" id="edit-math"></div>
+                      <div class="input-group"><label>英语</label><input type="number" id="edit-english"></div>
+                      <div class="input-group"><label>物理</label><input type="number" id="edit-physics"></div>
+                      <div class="input-group"><label>化学</label><input type="number" id="edit-chemistry"></div>
+                      <div class="input-group"><label>生物</label><input type="number" id="edit-biology"></div>
+                    </div>
+                    <!-- 第三排：历史、地理、政治、总分 -->
+                    <div class="edit-row">
+                      <div class="input-group"><label>历史</label><input type="number" id="edit-history"></div>
+                      <div class="input-group"><label>地理</label><input type="number" id="edit-geography"></div>
+                      <div class="input-group"><label>政治</label><input type="number" id="edit-politics"></div>
+                      <div class="input-group"><label>总分</label><input type="number" id="edit-total"></div>
+                    </div>
+                    <button class="btn" onclick="saveEditStudent()"><i class="fas fa-save"></i> 保存</button>
+                  </div>
+    <style>
+    /* 管理员编辑学生信息弹窗三排布局 */
+    .edit-modal-3row {
+      display: flex !important;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .edit-modal-3row .edit-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 0;
+    }
+    .edit-modal-3row .edit-row .input-group {
+      flex: 1 1 120px;
+      min-width: 110px;
+      margin-bottom: 0;
+    }
+    @media (max-width: 600px) {
+      .edit-modal-3row .edit-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .edit-modal-3row .edit-row .input-group {
+        min-width: 0;
+      }
+    }
+    </style>
+                </div>
+                <div id="delete-modal" class="modal">
+                  <div class="modal-content">
+                    <span class="close-modal" onclick="closeDeleteModal()">&times;</span>
+                    <div class="modal-header"><h2><i class="fas fa-trash"></i> 删除学生</h2></div>
+                    <p style="margin:20px 0;">确定要删除该学生信息吗？</p>
+                    <button class="btn delete-btn" onclick="confirmDeleteStudent()"><i class="fas fa-trash"></i> 确认删除</button>
+                  </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 管理员登录模态框 -->
+        <div class="modal" id="login-modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-login">&times;</span>
+                <div class="modal-header">
+                    <h2><i class="fas fa-lock"></i> 管理员登录</h2>
+                    <p>请输入管理员密码</p>
+                </div>
+                <div class="input-group">
+                    <label for="admin-password"><i class="fas fa-key"></i> 密码</label>
+                    <input type="password" id="admin-password" placeholder="请输入管理员密码">
+                </div>
+                <button class="btn" id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>
+            </div>
+        </div>
+        <!-- 管理员修改密码模态框 -->
+        <div class="modal" id="change-password-modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-change-password">&times;</span>
+                <div class="modal-header">
+                    <h2><i class="fas fa-key"></i> 修改管理员密码</h2>
+                </div>
+                <div class="input-group">
+                    <label for="old-admin-password"><i class="fas fa-lock"></i> 当前密码</label>
+                    <input type="password" id="old-admin-password" placeholder="请输入当前密码">
+                </div>
+                <div class="input-group">
+                    <label for="new-admin-password"><i class="fas fa-key"></i> 新密码</label>
+                    <input type="password" id="new-admin-password" placeholder="请输入新密码">
+                </div>
+                <div class="input-group">
+                    <label for="confirm-admin-password"><i class="fas fa-key"></i> 确认新密码</label>
+                    <input type="password" id="confirm-admin-password" placeholder="请再次输入新密码">
+                </div>
+                <button class="btn" id="save-admin-password-btn">
+                    <i class="fas fa-save"></i> 保存新密码
+                </button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div style="margin-top: 10px; color: #888; font-size: 0.98rem; line-height: 1.7; text-align: center;">
+                <div>备案号：京ICP备2025123456号</div>
+                <div>联系电话：400-123-4567</div>
+                <div>技术支持：<a href="mailto:support@example.com" style="color:#3498db;text-decoration:underline;">support@example.com</a></div>
+            </div>
+    </div>
+    
+    <style>
+    .result-page {
+        position: relative;
+        z-index: 1;
+    }
+    </style>
+    <script>
+// 数据源：所有学生成绩
+function getAllStudentData() {
+    // 优先从localStorage获取
+    const data = localStorage.getItem('studentData');
+    if (data) {
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return [];
+        }
+    }
+    // 兜底：从表格获取
+    const rows = document.querySelectorAll('#student-tbody tr');
+    const arr = [];
+    rows.forEach(tr => {
+        const item = [];
+        for(let i=0;i<14;i++) item.push(tr.children[i].textContent.trim());
+        arr.push(item);
+    });
+    return arr;
+}
+// 导出表格为Excel
+        document.getElementById('export-data').addEventListener('click', function() {
+            if(typeof XLSX==='undefined') {
+                alert('请先引入SheetJS库以支持Excel导出！');
+                return;
+            }
+            const aoa = getAllStudentData();
+            aoa.unshift(['考试号','姓名','学校','地区','语文','数学','英语','物理','化学','生物','历史','地理','政治','总分']);
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '成绩表');
+            XLSX.writeFile(wb, '学生成绩表.xlsx');
+        });
+        // 解析CSV为数组
+        function parseCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            const result = [];
+            for(let i=1;i<lines.length;i++){
+                const arr = lines[i].split(',');
+                if(arr.length>=14) result.push(arr.slice(0,14));
+            }
+            return result;
+        }
+        // 本地存储：保存和加载学生数据
+function saveStudentDataToStorage() {
+    const data = getAllStudentData();
+    localStorage.setItem('studentData', JSON.stringify(data));
+}
+function loadStudentDataFromStorage() {
+    const data = localStorage.getItem('studentData');
+    if(data) {
+        const arr = JSON.parse(data);
+        // 清空表格
+        document.getElementById('student-tbody').innerHTML = '';
+        addStudentRows(arr, true);
+    }
+}
+// 生成表格行（防乱码，唯一实现）
+function addStudentRows(rows, isFull) {
+    const tbody = document.getElementById('student-tbody');
+    if (isFull) tbody.innerHTML = '';
+    rows.forEach(arr => {
+        if (!arr || arr.length < 14) return;
+        // 防乱码：确保每项为字符串并去除不可见字符
+        const cleanArr = arr.map(x => (x + '').replace(/[\uFFFD\uFEFF]/g, '').trim());
+        const tr = document.createElement('tr');
+        for(let i=0;i<14;i++){
+            const td = document.createElement('td');
+            td.textContent = cleanArr[i]||'';
+            tr.appendChild(td);
+        }
+        const tdOp = document.createElement('td');
+        tdOp.innerHTML = `<button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button> <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>`;
+        tr.appendChild(tdOp);
+        tbody.appendChild(tr);
+    });
+    // 只在管理员端操作后保存
+    if (isFull) saveStudentDataToStorage();
+}
+
+// 管理员退出登录功能（每次进入管理员页面都绑定，防止失效）
+function bindLogoutAdminBtn() {
+    const logoutAdminBtn = document.getElementById('logout-admin-btn');
+    if (logoutAdminBtn) {
+        logoutAdminBtn.onclick = function() {
+            document.getElementById('admin-page').style.display = 'none';
+            document.getElementById('student-page').style.display = 'block';
+            document.getElementById('result-page').style.display = 'none';
+            window.scrollTo(0,0);
+        };
+    }
+}
+// 页面加载和每次管理员登录后都调用
+document.addEventListener('DOMContentLoaded', bindLogoutAdminBtn);
+function handleAdminLogin() {
+    const password = document.getElementById('admin-password').value;
+    if (password === getAdminPassword()) {
+        document.getElementById('admin-page').style.display = 'block';
+        document.getElementById('student-page').style.display = 'none';
+        document.getElementById('result-page').style.display = 'none';
+        document.getElementById('login-modal').style.display = 'none';
+        if(document.getElementById('admin-password')) document.getElementById('admin-password').value = '';
+        if(typeof loadStudentDataFromStorage === 'function') loadStudentDataFromStorage();
+        bindLogoutAdminBtn(); // 重新绑定退出按钮
+    } else {
+        alert('管理员密码错误！');
+    }
+}
+        // 真实上传解析
+        document.getElementById('upload-data').addEventListener('click', function() {
+            document.getElementById('upload-file').click();
+        });
+        document.getElementById('upload-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if(ext==='csv') {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const rows = parseCSV(evt.target.result);
+                    addStudentRows(rows,true);
+                    alert('CSV成绩数据上传并解析成功！');
+                    saveStudentDataToStorage();
+                };
+                reader.readAsText(file,'utf-8');
+            } else if(ext==='xls'||ext==='xlsx') {
+                // Excel解析
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const data = evt.target.result;
+                    // 依赖SheetJS库
+                    if(typeof XLSX==='undefined') {
+                        alert('请先引入SheetJS库以支持Excel解析！');
+                        return;
+                    }
+                    const workbook = XLSX.read(data, {type:'binary'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet, {header:1});
+                    json.shift(); // 去掉表头
+                    addStudentRows(json,true);
+                    alert('Excel成绩数据上传并解析成功！');
+                    saveStudentDataToStorage();
+                };
+                reader.readAsBinaryString(file);
+            } else {
+                alert('仅支持CSV或Excel文件！');
+            }
+            this.value = '';
+        });
+        // 编辑/删除弹窗逻辑
+        let currentEditRow = null;
+        function openEditModal(btn) {
+            const row = btn.closest('tr');
+            currentEditRow = row;
+            document.getElementById('edit-id').value = row.children[0].textContent;
+            document.getElementById('edit-name').value = row.children[1].textContent;
+            document.getElementById('edit-school').value = row.children[2].textContent;
+            document.getElementById('edit-area').value = row.children[3].textContent;
+            document.getElementById('edit-chinese').value = row.children[4].textContent;
+            document.getElementById('edit-math').value = row.children[5].textContent;
+            document.getElementById('edit-english').value = row.children[6].textContent;
+            document.getElementById('edit-physics').value = row.children[7].textContent;
+            document.getElementById('edit-chemistry').value = row.children[8].textContent;
+            document.getElementById('edit-biology').value = row.children[9].textContent;
+            document.getElementById('edit-history').value = row.children[10].textContent;
+            document.getElementById('edit-geography').value = row.children[11].textContent;
+            document.getElementById('edit-politics').value = row.children[12].textContent;
+            document.getElementById('edit-total').value = row.children[13].textContent;
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+        function saveEditStudent() {
+            if (!currentEditRow) return;
+            currentEditRow.children[0].textContent = document.getElementById('edit-id').value;
+            currentEditRow.children[1].textContent = document.getElementById('edit-name').value;
+            currentEditRow.children[2].textContent = document.getElementById('edit-school').value;
+            currentEditRow.children[3].textContent = document.getElementById('edit-area').value;
+            currentEditRow.children[4].textContent = document.getElementById('edit-chinese').value;
+            currentEditRow.children[5].textContent = document.getElementById('edit-math').value;
+            currentEditRow.children[6].textContent = document.getElementById('edit-english').value;
+            currentEditRow.children[7].textContent = document.getElementById('edit-physics').value;
+            currentEditRow.children[8].textContent = document.getElementById('edit-chemistry').value;
+            currentEditRow.children[9].textContent = document.getElementById('edit-biology').value;
+            currentEditRow.children[10].textContent = document.getElementById('edit-history').value;
+            currentEditRow.children[11].textContent = document.getElementById('edit-geography').value;
+            currentEditRow.children[12].textContent = document.getElementById('edit-politics').value;
+            currentEditRow.children[13].textContent = document.getElementById('edit-total').value;
+            closeEditModal();
+            saveStudentDataToStorage();
+        }
+        let currentDeleteRow = null;
+        function openDeleteModal(btn) {
+            currentDeleteRow = btn.closest('tr');
+            document.getElementById('delete-modal').style.display = 'flex';
+        }
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').style.display = 'none';
+        }
+        function confirmDeleteStudent() {
+            if (!currentDeleteRow) return;
+            currentDeleteRow.remove();
+            closeDeleteModal();
+            saveStudentDataToStorage();
+        }
+        // 页面切换功能
+        const studentPage = document.getElementById('student-page');
+        const resultPage = document.getElementById('result-page');
+        const adminPage = document.getElementById('admin-page');
+        const adminToggle = document.getElementById('admin-toggle');
+        const backToStudent = document.getElementById('back-to-student');
+        const backToQuery = document.getElementById('back-to-query');
+        const queryBtn = document.getElementById('query-btn');
+        const loginModal = document.getElementById('login-modal');
+        const closeLogin = document.getElementById('close-login');
+        const loginBtn = document.getElementById('login-btn');
+        
+        // 考试标题（本地存储，初始为学生成绩查询系统）
+        function getExamTitle() {
+            return localStorage.getItem('examTitle') || '学生成绩查询系统';
+        }
+        function setExamTitle(title) {
+            localStorage.setItem('examTitle', title);
+        }
+        // 页面加载时设置标题
+        function renderExamTitle() {
+            document.getElementById('exam-title').textContent = getExamTitle();
+        }
+        renderExamTitle();
+        // 修改考试标题弹窗逻辑
+        const editTitleBtn = document.getElementById('edit-title-btn');
+        const editTitleModal = document.getElementById('edit-title-modal');
+        const closeEditTitle = document.getElementById('close-edit-title');
+        const saveExamTitleBtn = document.getElementById('save-exam-title-btn');
+        if (editTitleBtn && editTitleModal && closeEditTitle && saveExamTitleBtn) {
+            editTitleBtn.addEventListener('click', function() {
+                editTitleModal.style.display = 'flex';
+                document.getElementById('new-exam-title').value = getExamTitle();
+            });
+            closeEditTitle.addEventListener('click', function() {
+                editTitleModal.style.display = 'none';
+            });
+            saveExamTitleBtn.addEventListener('click', function() {
+                const newTitle = document.getElementById('new-exam-title').value.trim();
+                if (!newTitle) {
+                    alert('标题不能为空！');
+                    return;
+                }
+                setExamTitle(newTitle);
+                renderExamTitle();
+                editTitleModal.style.display = 'none';
+            });
+            document.getElementById('new-exam-title').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveExamTitleBtn.click();
+                }
+            });
+        }
+        function getAdminPassword() {
+            return localStorage.getItem('adminPassword') || 'admin123';
+        }
+        function setAdminPassword(pwd) {
+            localStorage.setItem('adminPassword', pwd);
+        }
+        
+        // 切换到管理员登录
+        adminToggle.addEventListener('click', () => {
+            loginModal.style.display = "flex";
+        });
+        
+        // 关闭登录模态框
+        closeLogin.addEventListener('click', () => {
+            loginModal.style.display = "none";
+        });
+        
+        // 生成表格行
+        function addStudentRows(rows, isFull) {
+            const tbody = document.getElementById('student-tbody');
+            if (isFull) tbody.innerHTML = '';
+            rows.forEach(arr => {
+                if (!arr || arr.length < 14) return;
+                // 防乱码：确保每项为字符串并去除不可见字符
+                const cleanArr = arr.map(x => (x + '').replace(/[\uFFFD\uFEFF]/g, '').trim());
+                const tr = document.createElement('tr');
+                for(let i=0;i<14;i++){
+                    const td = document.createElement('td');
+                    td.textContent = cleanArr[i]||'';
+                    tr.appendChild(td);
+                }
+                const tdOp = document.createElement('td');
+                tdOp.innerHTML = `<button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button> <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>`;
+                tr.appendChild(tdOp);
+                tbody.appendChild(tr);
+            });
+            // 只在管理员端操作后保存
+            if (isFull) saveStudentDataToStorage();
+        }
+        const changePwdBtn = document.getElementById('change-admin-password-btn');
+        const changePwdModal = document.getElementById('change-password-modal');
+        const closeChangePwd = document.getElementById('close-change-password');
+        const savePwdBtn = document.getElementById('save-admin-password-btn');
+        if (changePwdBtn && changePwdModal && closeChangePwd && savePwdBtn) {
+            changePwdBtn.addEventListener('click', function() {
+                changePwdModal.style.display = 'flex';
+                document.getElementById('old-admin-password').value = '';
+                document.getElementById('new-admin-password').value = '';
+                document.getElementById('confirm-admin-password').value = '';
+            });
+            closeChangePwd.addEventListener('click', function() {
+                changePwdModal.style.display = 'none';
+            });
+            savePwdBtn.addEventListener('click', function() {
+                const oldPwd = document.getElementById('old-admin-password').value;
+                const newPwd = document.getElementById('new-admin-password').value;
+                const confirmPwd = document.getElementById('confirm-admin-password').value;
+                if (!oldPwd || !newPwd || !confirmPwd) {
+                    alert('请填写所有字段！');
+                    return;
+                }
+                if (oldPwd !== getAdminPassword()) {
+                    alert('当前密码错误！');
+                    return;
+                }
+                if (newPwd.length < 4) {
+                    alert('新密码长度不能少于4位！');
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    alert('两次输入的新密码不一致！');
+                    return;
+                }
+                setAdminPassword(newPwd);
+                alert('密码修改成功！请牢记新密码。');
+                changePwdModal.style.display = 'none';
+            });
+            // 支持回车快捷键保存
+            ['old-admin-password','new-admin-password','confirm-admin-password'].forEach(id => {
+                document.getElementById(id).addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        savePwdBtn.click();
+                    }
+                });
+            });
+        }
+        loginBtn.addEventListener('click', handleAdminLogin);
+        // 支持回车快捷键登录
+        document.getElementById('admin-password').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAdminLogin();
+            }
+        });
+        
+        // 返回学生端
+        backToStudent.addEventListener('click', () => {
+            adminPage.style.display = 'none';
+            studentPage.style.display = 'block';
+            resultPage.style.display = 'none';
+            window.scrollTo(0,0);
+        });
+        // 跳转到考生查询页
+        document.getElementById('goto-student-query').addEventListener('click', () => {
+            adminPage.style.display = 'none';
+            studentPage.style.display = 'block';
+            resultPage.style.display = 'none';
+            window.scrollTo(0,0);
+        });
+        
+        // 返回查询页面
+        backToQuery.addEventListener('click', () => {
+            resultPage.style.display = 'none';
+            studentPage.style.display = 'block';
+        });
+        
+        // 查询成绩（查找本地存储数据）
+        // 验证码生成与校验
+        function randomCaptcha(len = 4) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < len; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+        let currentCaptcha = '';
+        function renderCaptcha() {
+            currentCaptcha = randomCaptcha();
+            document.getElementById('captcha-code').textContent = currentCaptcha;
+        }
+        document.getElementById('captcha-code').addEventListener('click', renderCaptcha);
+        // 初始渲染验证码
+        renderCaptcha();
+
+        queryBtn.addEventListener('click', () => {
+            handleStudentQuery();
+        });
+
+        // 支持回车快捷键提交查询
+        function addEnterListenerToQueryInputs() {
+            const inputs = [
+                document.getElementById('exam-number'),
+                document.getElementById('password'),
+                document.getElementById('captcha-input')
+            ];
+            inputs.forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleStudentQuery();
+                    }
+                });
+            });
+        }
+        addEnterListenerToQueryInputs();
+
+        // 查询逻辑封装
+        function handleStudentQuery() {
+            const examNumber = document.getElementById('exam-number').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const captchaInput = document.getElementById('captcha-input').value.trim();
+            if (!examNumber || !password || !captchaInput) {
+                alert('请填写所有必填字段！');
+                return;
+            }
+            // 校验验证码（忽略大小写）
+            if (captchaInput.toLowerCase() !== currentCaptcha.toLowerCase()) {
+                alert('验证码错误！');
+                renderCaptcha();
+                return;
+            }
+            // 密码为考试号后六位，忽略大小写
+            const examNumberLower = examNumber.toLowerCase();
+            const passwordLower = password.toLowerCase();
+            if (examNumber.length < 6 || passwordLower !== examNumberLower.slice(-6)) {
+                alert('密码错误！（密码为考试号后六位）');
+                renderCaptcha();
+                return;
+            }
+            // 查找学生（只查localStorage数据，忽略大小写）
+            const data = getAllStudentData();
+            const stu = data.find(row => (row[0] && row[0].toLowerCase() === examNumberLower));
+            if (!stu) {
+                alert('未找到该学生信息！');
+                renderCaptcha();
+                return;
+            }
+            // 显示结果
+            document.getElementById('result-name').textContent = stu[1];
+            document.getElementById('result-id').textContent = stu[0];
+            document.getElementById('result-school').textContent = stu[2];
+            document.getElementById('result-area').textContent = stu[3];
+            document.getElementById('result-chinese').textContent = stu[4];
+            document.getElementById('result-math').textContent = stu[5];
+            document.getElementById('result-english').textContent = stu[6];
+            document.getElementById('result-physics').textContent = stu[7];
+            document.getElementById('result-chemistry').textContent = stu[8];
+            document.getElementById('result-biology').textContent = stu[9];
+            document.getElementById('result-history').textContent = stu[10];
+            document.getElementById('result-geography').textContent = stu[11];
+            document.getElementById('result-politics').textContent = stu[12];
+            document.getElementById('result-total').textContent = stu[13];
+            // 结果页切换
+            studentPage.style.display = 'none';
+            resultPage.style.display = 'block';
+            queryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查询中...';
+            queryBtn.disabled = true;
+            setTimeout(() => {
+                queryBtn.innerHTML = '<i class="fas fa-search"></i> 查询成绩';
+                queryBtn.disabled = false;
+                document.getElementById('exam-number').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('captcha-input').value = '';
+                renderCaptcha();
+            }, 1500);
+        }
+        
+        // 验证码相关代码已移除
+        
+        // 搜索功能
+        document.getElementById('search-student').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#admin-page table tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // 下载模板功能
+        document.getElementById('download-template').addEventListener('click', function() {
+            // 生成Excel模板（只含表头，无数据）
+            if(typeof XLSX==='undefined') {
+                alert('请先引入SheetJS库以支持Excel导出！');
+                return;
+            }
+            const header = [['考试号','姓名','学校','地区','语文','数学','英语','物理','化学','生物','历史','地理','政治','总分']];
+            const ws = XLSX.utils.aoa_to_sheet(header);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '成绩模板');
+            XLSX.writeFile(wb, '成绩录入模板.xlsx');
+        });
+        
+        // 上传数据功能
+        document.getElementById('upload-data').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-upload"></i> 上传成绩数据';
+                alert('成绩数据上传成功！');
+            }, 2000);
+        });
+        // 粘贴导入功能
+        document.getElementById('paste-import').addEventListener('click', function() {
+            const val = document.getElementById('paste-area').value.trim();
+            if(!val) return alert('请粘贴内容！');
+            // 统一换行符，去除不可见字符
+            const lines = val.replace(/[\uFFFD\uFEFF]/g, '').split(/\r?\n/).filter(line => line.trim() !== '');
+            let start = 0;
+            // 跳过表头
+            if(lines[0].includes('考试号') && lines[0].includes('总分')) start=1;
+            const rows = [];
+            for(let i=start;i<lines.length;i++){
+                // 兼容制表符和逗号分隔，去除每项不可见字符
+                const arr = lines[i].split(/,|\t/).map(x => (x+'').replace(/[\uFFFD\uFEFF]/g, '').trim());
+                if(arr.length>=14) rows.push(arr.slice(0,14));
+            }
+            if(rows.length === 0) {
+                alert('粘贴内容格式不正确或无有效数据！');
+                return;
+            }
+            addStudentRows(rows,true);
+            alert('粘贴数据导入成功！');
+            saveStudentDataToStorage();
+        });
+    </script>
+    <!-- SheetJS Excel解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>
