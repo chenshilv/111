@@ -845,53 +845,26 @@
     observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
 })();
 
-// 修复验证码无法显示和管理员无法登录问题
+// 只保留全局唯一验证码逻辑
+// 验证码生成与校验（全局唯一）
+window.currentCaptcha = '';
+function randomCaptcha(len = 4) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < len; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+function renderCaptcha() {
+    window.currentCaptcha = randomCaptcha();
+    var codeEl = document.getElementById('captcha-code');
+    if(codeEl) codeEl.textContent = window.currentCaptcha;
+}
 document.addEventListener('DOMContentLoaded', function() {
-    // 验证码相关
-    function randomCaptcha(len = 4) {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < len; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-    }
-    let currentCaptcha = '';
-    function renderCaptcha() {
-        currentCaptcha = randomCaptcha();
-        const codeEl = document.getElementById('captcha-code');
-        if(codeEl) codeEl.textContent = currentCaptcha;
-    }
-    const codeEl = document.getElementById('captcha-code');
+    var codeEl = document.getElementById('captcha-code');
     if(codeEl) codeEl.addEventListener('click', renderCaptcha);
     renderCaptcha();
-
-    // 管理员登录逻辑
-    function getAdminPassword() {
-        return localStorage.getItem('adminPassword') || 'admin123';
-    }
-    function handleAdminLogin() {
-        const password = document.getElementById('admin-password').value;
-        if (password === getAdminPassword()) {
-            document.getElementById('admin-page').style.display = 'block';
-            document.getElementById('student-page').style.display = 'none';
-            document.getElementById('result-page').style.display = 'none';
-            document.getElementById('login-modal').style.display = 'none';
-            if(document.getElementById('admin-password')) document.getElementById('admin-password').value = '';
-            if(typeof loadStudentDataFromStorage === 'function') loadStudentDataFromStorage();
-        } else {
-            alert('管理员密码错误！');
-        }
-    }
-    const loginBtn = document.getElementById('login-btn');
-    if(loginBtn) loginBtn.addEventListener('click', handleAdminLogin);
-    const adminPwdInput = document.getElementById('admin-password');
-    if(adminPwdInput) adminPwdInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAdminLogin();
-        }
-    });
 });
     </script>
 </head>
@@ -1042,16 +1015,6 @@ document.addEventListener('DOMContentLoaded', function() {
                       <i class="fas fa-user-graduate"></i> 返回学生端
                   </button>
                 </div>
-        // 管理员退出登录功能
-        const logoutAdminBtn = document.getElementById('logout-admin-btn');
-        if (logoutAdminBtn) {
-            logoutAdminBtn.addEventListener('click', function() {
-                adminPage.style.display = 'none';
-                studentPage.style.display = 'block';
-                resultPage.style.display = 'none';
-                window.scrollTo(0,0);
-            });
-        }
             <!-- 显式添加跳转按钮在主内容区顶部 -->
             <div style="margin-bottom:18px;text-align:right;">
                 <button class="admin-btn" id="goto-student-query">
@@ -1144,69 +1107,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         </div>
-        // 删除/恢复所有学生信息功能
-        const deleteAllBtn = document.getElementById('delete-all-students-btn');
-        const restoreDemoBtn = document.getElementById('restore-demo-students-btn');
-        const adminActionModal = document.getElementById('admin-action-modal');
-        const closeAdminAction = document.getElementById('close-admin-action');
-        const adminActionTitle = document.getElementById('admin-action-title');
-        const adminActionTip = document.getElementById('admin-action-tip');
-        const adminActionPwd = document.getElementById('admin-action-password');
-        const adminActionConfirm = document.getElementById('admin-action-confirm-btn');
-        let adminActionType = '';
-        // 备份初始演示数据
-        const DEMO_STUDENTS = [
-            ["202306001","张明","第一中学","北京市海淀区","135","142","138","92","88","86","89","91","87","888"],
-            ["202306002","李华","第二中学","北京市朝阳区","128","135","130","85","82","80","78","90","88","865"],
-            ["202306003","王芳","第三中学","北京市西城区","145","150","148","95","90","88","92","94","89","902"],
-            ["202306004","刘伟","第四中学","北京市东城区","120","125","130","80","75","70","65","85","80","854"]
-        ];
-        if(deleteAllBtn && restoreDemoBtn && adminActionModal && closeAdminAction && adminActionTitle && adminActionTip && adminActionPwd && adminActionConfirm) {
-            deleteAllBtn.addEventListener('click', function() {
-                adminActionType = 'delete';
-                adminActionTitle.innerHTML = '<i class="fas fa-trash"></i> 删除所有学生信息';
-                adminActionTip.textContent = '此操作将清空所有学生数据，且不可恢复，请谨慎操作！';
-                adminActionPwd.value = '';
-                adminActionModal.style.display = 'flex';
-            });
-            restoreDemoBtn.addEventListener('click', function() {
-                adminActionType = 'restore';
-                adminActionTitle.innerHTML = '<i class="fas fa-undo"></i> 恢复所有成绩';
-                adminActionTip.textContent = '此操作将恢复初始演示数据，当前数据将被覆盖，请谨慎操作！';
-                adminActionPwd.value = '';
-                adminActionModal.style.display = 'flex';
-            });
-            closeAdminAction.addEventListener('click', function() {
-                adminActionModal.style.display = 'none';
-            });
-            function doAdminAction() {
-                const pwd = adminActionPwd.value;
-                if(pwd !== getAdminPassword()) {
-                    alert('管理员密码错误！');
-                    return;
-                }
-                if(adminActionType==='delete') {
-                    // 清空表格和localStorage
-                    document.getElementById('student-tbody').innerHTML = '';
-                    localStorage.removeItem('studentData');
-                    alert('所有学生信息已删除！');
-                } else if(adminActionType==='restore') {
-                    // 恢复演示数据
-                    document.getElementById('student-tbody').innerHTML = '';
-                    addStudentRows(DEMO_STUDENTS, true);
-                    alert('已恢复初始演示数据！');
-                }
-                adminActionModal.style.display = 'none';
-            }
-            adminActionConfirm.addEventListener('click', doAdminAction);
-            adminActionPwd.addEventListener('keydown', function(e) {
-                if(e.key==='Enter') {
-                    e.preventDefault();
-                    doAdminAction();
-                }
-            });
-        }
-            </div>
             
             <div class="admin-section">
                 <h3><i class="fas fa-edit"></i> 学生信息管理</h3>
@@ -1235,86 +1135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     </thead>
                     <tbody id="student-tbody">
-                        <tr>
-                            <td>202306001</td>
-                            <td>张明</td>
-                            <td>第一中学</td>
-                            <td>北京市海淀区</td>
-                            <td>135</td>
-                            <td>142</td>
-                            <td>138</td>
-                            <td>92</td>
-                            <td>88</td>
-                            <td>86</td>
-                            <td>89</td>
-                            <td>91</td>
-                            <td>87</td>
-                            <td>888</td>
-                            <td>
-                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
-                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>202306002</td>
-                            <td>李华</td>
-                            <td>第二中学</td>
-                            <td>北京市朝阳区</td>
-                            <td>128</td>
-                            <td>135</td>
-                            <td>130</td>
-                            <td>85</td>
-                            <td>82</td>
-                            <td>80</td>
-                            <td>78</td>
-                            <td>90</td>
-                            <td>88</td>
-                            <td>865</td>
-                            <td>
-                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
-                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>202306003</td>
-                            <td>王芳</td>
-                            <td>第三中学</td>
-                            <td>北京市西城区</td>
-                            <td>145</td>
-                            <td>150</td>
-                            <td>148</td>
-                            <td>95</td>
-                            <td>90</td>
-                            <td>88</td>
-                            <td>92</td>
-                            <td>94</td>
-                            <td>89</td>
-                            <td>902</td>
-                            <td>
-                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
-                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>202306004</td>
-                            <td>刘伟</td>
-                            <td>第四中学</td>
-                            <td>北京市东城区</td>
-                            <td>120</td>
-                            <td>125</td>
-                            <td>130</td>
-                            <td>80</td>
-                            <td>75</td>
-                            <td>70</td>
-                            <td>65</td>
-                            <td>85</td>
-                            <td>80</td>
-                            <td>854</td>
-                            <td>
-                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button>
-                                <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>
-                            </td>
-                        </tr>
+                        <!-- 表格内容由JS动态渲染 -->
                     </tbody>
                 </table>
                 <!-- 编辑/删除弹窗 -->
@@ -1551,6 +1372,8 @@ function handleAdminLogin() {
         bindLogoutAdminBtn(); // 重新绑定退出按钮
     } else {
         alert('管理员密码错误！');
+        // 密码错误时不做任何页面切换
+        return;
     }
 }
         // 真实上传解析
@@ -1722,28 +1545,7 @@ function handleAdminLogin() {
             loginModal.style.display = "none";
         });
         
-        // 生成表格行
-        function addStudentRows(rows, isFull) {
-            const tbody = document.getElementById('student-tbody');
-            if (isFull) tbody.innerHTML = '';
-            rows.forEach(arr => {
-                if (!arr || arr.length < 14) return;
-                // 防乱码：确保每项为字符串并去除不可见字符
-                const cleanArr = arr.map(x => (x + '').replace(/[\uFFFD\uFEFF]/g, '').trim());
-                const tr = document.createElement('tr');
-                for(let i=0;i<14;i++){
-                    const td = document.createElement('td');
-                    td.textContent = cleanArr[i]||'';
-                    tr.appendChild(td);
-                }
-                const tdOp = document.createElement('td');
-                tdOp.innerHTML = `<button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> 编辑</button> <button class="action-btn delete-btn" onclick="openDeleteModal(this)"><i class="fas fa-trash"></i> 删除</button>`;
-                tr.appendChild(tdOp);
-                tbody.appendChild(tr);
-            });
-            // 只在管理员端操作后保存
-            if (isFull) saveStudentDataToStorage();
-        }
+        // ...existing code...
         const changePwdBtn = document.getElementById('change-admin-password-btn');
         const changePwdModal = document.getElementById('change-password-modal');
         const closeChangePwd = document.getElementById('close-change-password');
@@ -1823,7 +1625,8 @@ function handleAdminLogin() {
         });
         
         // 查询成绩（查找本地存储数据）
-        // 验证码生成与校验
+        // 验证码生成与校验（全局唯一）
+        window.currentCaptcha = '';
         function randomCaptcha(len = 4) {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -1832,10 +1635,9 @@ function handleAdminLogin() {
             }
             return code;
         }
-        let currentCaptcha = '';
         function renderCaptcha() {
-            currentCaptcha = randomCaptcha();
-            document.getElementById('captcha-code').textContent = currentCaptcha;
+            window.currentCaptcha = randomCaptcha();
+            document.getElementById('captcha-code').textContent = window.currentCaptcha;
         }
         document.getElementById('captcha-code').addEventListener('click', renderCaptcha);
         // 初始渲染验证码
@@ -1872,8 +1674,8 @@ function handleAdminLogin() {
                 alert('请填写所有必填字段！');
                 return;
             }
-            // 校验验证码（忽略大小写）
-            if (captchaInput.toLowerCase() !== currentCaptcha.toLowerCase()) {
+            // 校验验证码（忽略大小写，使用全局唯一currentCaptcha）
+            if (captchaInput.toLowerCase() !== window.currentCaptcha.toLowerCase()) {
                 alert('验证码错误！');
                 renderCaptcha();
                 return;
